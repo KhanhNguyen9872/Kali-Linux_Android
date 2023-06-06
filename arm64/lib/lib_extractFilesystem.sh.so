@@ -1,12 +1,36 @@
 #!/support/common/busybox_static sh
 
-/support/common/busybox_static printf "\rInstalling Kali.... (5-20 minutes)\n"
-/support/common/busybox_static tar -xJf $ROOT_PATH/support/rootfs_khanhnguyen9872.tar.xz -C / > $ROOT_PATH/log.txt 2>&1
+/support/common/busybox_static mkdir -p /etc
+/support/common/busybox_static printf "nameserver 8.8.8.8\nnameserver 8.8.4.4" > /etc/resolv.conf
+
+/support/common/busybox_static printf "\rDownloading Kali....\n"
+file_name="kali.iso"
+url="https://github.com/KhanhNguyen9872/PublicFile/releases/download/kaliapk/kali.iso"
+
+total="$(($(/support/common/busybox_static wget --no-check-certificate "$url" --spider --server-response -O - 2>&1 | /support/common/busybox_static sed -ne '/Content-Length/{s/.*: //;p}' | /support/common/busybox_static sed '$!d') / 1048576))"
+
+/support/common/busybox_static rm -rf "$ROOT_PATH/$file_name" 2> /dev/null
+/support/common/busybox_static touch "$ROOT_PATH/$file_name" 2> /dev/null
+
+cur_prev="0"
+cur="0"
+
+while [[ "$cur" -lt "$total" ]]; do cur="$(($(/support/common/busybox_static wc -c "$ROOT_PATH/$file_name" 2> /dev/null | /support/common/busybox_static awk '{print $1}') / 1048576))"; /support/common/busybox_static echo "Downloading Kali [${cur} MB / ${total} MB] << $((cur - cur_prev)) MB"; cur_prev="${cur}"; /support/common/busybox_static sleep 1; done &
+
+/support/common/busybox_static wget --no-check-certificate "$url" -O "$ROOT_PATH/$file_name" >/dev/null 2>&1
+
+x="0"
+/support/common/busybox_static printf "\rInstalling.... (15-30 minutes)\n"
+
+/support/common/busybox_static tar -xvJf "$ROOT_PATH/$file_name" -C / 2>> /log.txt | while read line; do x=$((x+1)); /support/common/busybox_static printf "\rInstalling [${x} files] (15-30 minutes)\n"; done
+
+/support/common/busybox_static rm -rf "$ROOT_PATH/$file_name" 2> /dev/null
 
 if [[ $? == 0 ]]; then
-	#/support/common/addNonRootUser.sh
+	/support/common/addNonRootUser.sh
 	/support/common/busybox_static touch /support/.success_filesystem_extraction
 	/support/common/busybox_static touch /support/.success_filesystem_update_extraction
 else
-	/support/common/busybox_static touch /support/.failure_filesystem_extraction
+   /support/common/busybox_static touch /support/.failure_filesystem_extraction
 fi
+

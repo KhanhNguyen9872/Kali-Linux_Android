@@ -1,7 +1,5 @@
 #!/support/common/busybox_static sh
 
-/support/common/busybox_static rm -rf $ROOT_PATH/vscode/rootfs.tar.xz
-
 # /support/common/busybox_static tar -xvJf $ROOT_PATH/vscode/rootfsUpdate.tar.xz -C /
 
 # if [[ $? == 0 ]]; then
